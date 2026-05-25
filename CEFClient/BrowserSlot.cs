@@ -20,7 +20,6 @@ namespace CefClient
         public Panel HostPanel { get; }
         public ChromiumWebBrowser Browser { get; }
         public IRequestContext RequestContext { get; }
-        public DeviceProfileResult DevProfile { get; }
 
         public string CachePath { get; }
         private readonly Control _parent;
@@ -39,7 +38,6 @@ namespace CefClient
             ChromiumWebBrowser browser,
             IRequestContext requestContext,
             string cachePath,
-            DeviceProfileResult devProfile,
             Control parent)
         {
             BrowserId = browserId;
@@ -47,9 +45,7 @@ namespace CefClient
             Browser = browser;
             RequestContext = requestContext;
             CachePath = cachePath;
-            DevProfile = devProfile;
             _parent = parent;
-
             Browser.AddressChanged += Browser_AddressChanged;
             Browser.FrameLoadStart += Browser_FrameLoadStart;
             Browser.LoadError += Browser_LoadError;
@@ -166,21 +162,6 @@ namespace CefClient
                     return result;
                 }
 
-                var urlValidationError = ValidateHttpNavigationUrl(url, "url");
-                if (!string.IsNullOrWhiteSpace(urlValidationError))
-                {
-                    result = new BrowserRunResult
-                    {
-                        BrowserId = BrowserId,
-                        Success = false,
-                        Message = urlValidationError,
-                        Data = BuildRunData(url, referer, sleepDelayMs, taskId: taskId, consumerId: consumerId, uvIndex: uvIndex, loadTimeoutMs: loadTimeoutMs, pvTotal: pvTotal, completedPv: completedPv, pvIntervalMs: pvIntervalMs)
-                    };
-
-                    await PublishStatusAsync(statusChanged, "error", false, result.Message, cancellationToken, result.Data);
-                    return result;
-                }
-
                 try
                 {
                     await Browser.WaitForInitialLoadAsync()
@@ -206,19 +187,11 @@ namespace CefClient
                 WaitForNavigationAsyncResponse? lastLoadResponse = null;
                 var lastLoadTimedOut = false;
                 var finalLoadCompleted = false;
-
-                var usableReferer = GetUsableReferer(referer, out var ignoredRefererReason);
-                if (!string.IsNullOrWhiteSpace(ignoredRefererReason))
-                {
-                    await PublishLogAsync($"Ignored invalid referer. reason={ignoredRefererReason}, referer={referer}");
-                }
-
-                var refererHeaders = BuildRefererHeaders(usableReferer);
+ 
 
                 for (var pvIndex = 1; pvIndex <= pvTotal; pvIndex++)
                 {
                     ResetNavigationDiagnostics(url);
-                    await PublishLogAsync($"PV {pvIndex}/{pvTotal} loading. url={url}, referer={usableReferer}, timeoutMs={loadTimeoutMs}");
 
                     var navigationTask = await UiInvokeAsync(
                         () => Browser.WaitForNavigationAsync(
@@ -226,17 +199,16 @@ namespace CefClient
                             cancellationToken),
                         cancellationToken);
 
-                    await UiInvokeAsync(() =>
+
+
+                    if (!string.IsNullOrWhiteSpace(referer))
                     {
-                        if (refererHeaders != null)
-                        {
-                            LoadUrl(Browser, url, "GET", referrer: usableReferer);
-                        }
-                        else
-                        {
-                            Browser.Load(url);
-                        }
-                    }, cancellationToken);
+                        LoadUrl(Browser, url, "GET", referrer: referer);
+                    }
+                    else
+                    {
+                        Browser.Load(url);
+                    }
 
                     WaitForNavigationAsyncResponse? loadResponse = null;
                     var loadTimedOut = false;
@@ -277,7 +249,6 @@ namespace CefClient
                         failedUrl: GetLastMainFrameFailedUrl(),
                         loadErrorText: GetLastMainFrameLoadErrorText(),
                         currentAddress: GetCurrentAddress(),
-                        ignoredRefererReason: ignoredRefererReason,
                         proxyServer: proxyInfo.ProxyServer,
                         proxyApplied: proxyInfo.Applied,
                         proxyError: proxyInfo.Error,
@@ -582,8 +553,11 @@ namespace CefClient
 
             await UiInvokeAsync(() =>
             {
-                HostPanel.Width = devProfile.CssWidth;
+                //Browser.Size = new Size(devProfile.CssWidth, devProfile.CssHeight);
+                HostPanel.Width = devProfile.CssWidth + 8;
                 HostPanel.Height = devProfile.CssHeight;
+                
+
             }, cancellationToken);
 
             using var devToolsClient = await UiInvokeAsync(() => Browser.GetDevToolsClient(), cancellationToken);
@@ -603,7 +577,7 @@ namespace CefClient
                 height: devProfile.CssHeight,
                 deviceScaleFactor: devProfile.DeviceScaleFactor,
                 mobile: true,
-                scale: 1.0,
+                scale: 1.0 * 0.96,
                 screenWidth: devProfile.CssWidth,
                 screenHeight: devProfile.CssHeight);
             await devToolsClient.Emulation.SetTouchEmulationEnabledAsync(true, Random.Shared.Next(4, 6));

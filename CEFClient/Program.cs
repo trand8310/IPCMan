@@ -49,9 +49,10 @@ namespace CefClient
             {
                 e.SetObserved();
             };
-
+  
             CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
             Cef.EnableWaitForBrowsersToClose();
+           
             var settings = new CefSettings
             {
                 BrowserSubprocessPath = defaultSubprocessPath,

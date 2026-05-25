@@ -58,27 +58,41 @@ namespace CefClient
                 {
                     Directory.CreateDirectory(CefCachePaths.RootCachePath);
 
-                    var cachePath = CefCachePaths.GetTaskSlotCachePath(taskId, browserId);
+                    var cachePath = CefCachePaths.GetBrowserCachePath(browserId);
                     Directory.CreateDirectory(cachePath);
 
                     var requestContext = new RequestContext(new RequestContextSettings
                     {
                         CachePath = cachePath,
-                        // PersistUserPreferences = true,
+                        PersistUserPreferences = false,
                         PersistSessionCookies = false,
                     });
 
                     var panel = new Panel
                     {
-                        Width = 420,
-                        Height = 920,
+                        Width = 360,
+                        Height = 720,
                         Margin = new Padding(5),
                         BorderStyle = BorderStyle.FixedSingle
                     };
 
+                    var title = new Label
+                    {
+                        AutoEllipsis = true,
+                        Dock = DockStyle.Top,
+                        Height = 28,
+                        Text = $"CefClient {browserId}",
+                        TextAlign = ContentAlignment.MiddleCenter
+                    };
+
+
                     var browser = new ChromiumWebBrowser("about:blank", requestContext)
                     {
-                        Dock = DockStyle.Fill
+                        Dock = DockStyle.Fill,
+                        //Dock = DockStyle.None,
+                        //Location = new Point(0, 0),
+                        //Size = new Size(412,915),
+                        //Anchor = AnchorStyles.Right | AnchorStyles.Bottom,
                     };
 
                     //browser.FrameLoadStart += (a, b) =>
@@ -88,8 +102,9 @@ namespace CefClient
                     //        browser.ShowDevTools();
                     //    }
                     //};
-
+                    panel.Controls.Add(title);
                     panel.Controls.Add(browser);
+                    title.SendToBack();
                     _hostPanel.Controls.Add(panel);
 
                     return new BrowserSlot(browserId, panel, browser, requestContext, cachePath, _hostPanel);

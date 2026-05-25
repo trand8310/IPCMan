@@ -32,8 +32,8 @@
             // 
             // MainForm
             // 
-            AutoScaleDimensions = new SizeF(9F, 20F);
-            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleDimensions = new SizeF(120F, 120F);
+            AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(1125, 888);
             Name = "MainForm";
             Text = "MainForm";
