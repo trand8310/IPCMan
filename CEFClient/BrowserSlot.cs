@@ -187,7 +187,7 @@ namespace CefClient
                 WaitForNavigationAsyncResponse? lastLoadResponse = null;
                 var lastLoadTimedOut = false;
                 var finalLoadCompleted = false;
- 
+
 
                 for (var pvIndex = 1; pvIndex <= pvTotal; pvIndex++)
                 {
@@ -549,14 +549,16 @@ namespace CefClient
                 ua = GetString(payload, "userAgent");
 
             var platform = os == 1 ? "Android" : "iPhone";
-            var devProfile = AndroidViewportMatcher.Match(sw, sh);
+
+
+            var devProfile = DeviceViewportMatcher.Match(sw, sh, os == 2 ? DeviceSystemType.IOS : DeviceSystemType.Android);
 
             await UiInvokeAsync(() =>
             {
-                //Browser.Size = new Size(devProfile.CssWidth, devProfile.CssHeight);
-                HostPanel.Width = devProfile.CssWidth + 8;
-                HostPanel.Height = devProfile.CssHeight;
-                
+                //Browser.Size = new Size(devProfile.ScreenWidth, devProfile.ScreenHeight);
+               // HostPanel.Width = devProfile.ViewportWidth;
+                //HostPanel.Height = devProfile.ViewportHeight;
+
 
             }, cancellationToken);
 
@@ -573,18 +575,22 @@ namespace CefClient
             }
 
             await devToolsClient.Emulation.SetDeviceMetricsOverrideAsync(
-                width: devProfile.CssWidth,
-                height: devProfile.CssHeight,
+                width: devProfile.ViewportWidth,
+                height: devProfile.ViewportHeight,
                 deviceScaleFactor: devProfile.DeviceScaleFactor,
                 mobile: true,
-                scale: 1.0 * 0.96,
-                screenWidth: devProfile.CssWidth,
-                screenHeight: devProfile.CssHeight);
+                scale: 1.0,
+                screenWidth: devProfile.ViewportWidth,
+                screenHeight: devProfile.ViewportHeight,
+                positionX: 0, 
+                positionY: 0,
+                screenOrientation: new CefSharp.DevTools.Emulation.ScreenOrientation() { Angle = 0, Type = CefSharp.DevTools.Emulation.ScreenOrientationType.PortraitPrimary });
+
             await devToolsClient.Emulation.SetTouchEmulationEnabledAsync(true, Random.Shared.Next(4, 6));
             await devToolsClient.Emulation.SetScrollbarsHiddenAsync(true);
 
-            await publishLogAsync($"Mobile emulation configured. device={sw}x{sh}, css={devProfile.CssWidth}x{devProfile.CssHeight}, dpr={devProfile.DeviceScaleFactor}, platform={platform}, ua={ua}");
-            return new DeviceConfigurationInfo(sw, sh, devProfile.CssWidth, devProfile.CssHeight, devProfile.DeviceScaleFactor, platform, ua);
+            await publishLogAsync($"Mobile emulation configured. device={sw}x{sh}, css={devProfile.ViewportWidth}x{devProfile.ViewportHeight}, dpr={devProfile.DeviceScaleFactor}, platform={platform}, ua={ua}");
+            return new DeviceConfigurationInfo(sw, sh, devProfile.ViewportWidth, devProfile.ViewportHeight, devProfile.DeviceScaleFactor, platform, ua);
         }
 
         private void Browser_AddressChanged(object? sender, AddressChangedEventArgs e)

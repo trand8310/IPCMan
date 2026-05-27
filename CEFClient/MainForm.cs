@@ -63,15 +63,15 @@ namespace CefClient
 
                     var requestContext = new RequestContext(new RequestContextSettings
                     {
-                        CachePath = cachePath,
+                        //CachePath = cachePath,
                         PersistUserPreferences = false,
                         PersistSessionCookies = false,
                     });
 
                     var panel = new Panel
                     {
-                        Width = 360,
-                        Height = 720,
+                        Width = 412,
+                        Height = 915,
                         Margin = new Padding(5),
                         BorderStyle = BorderStyle.FixedSingle
                     };
@@ -88,10 +88,10 @@ namespace CefClient
 
                     var browser = new ChromiumWebBrowser("about:blank", requestContext)
                     {
-                        Dock = DockStyle.Fill,
-                        //Dock = DockStyle.None,
-                        //Location = new Point(0, 0),
-                        //Size = new Size(412,915),
+                        //Dock = DockStyle.Fill,
+                        Dock = DockStyle.None,
+                        Location = new Point(0, 0),
+                        Size = new Size(412,915),
                         //Anchor = AnchorStyles.Right | AnchorStyles.Bottom,
                     };
 
