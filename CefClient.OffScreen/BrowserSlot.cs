@@ -10,6 +10,7 @@ namespace CefClient
     using System.Diagnostics;
     using System.Globalization;
     using System.Text.Json.Nodes;
+    using CefSharp.DevTools.Emulation;
 
     public sealed class BrowserSlot : IAsyncDisposable
     {
@@ -89,7 +90,7 @@ namespace CefClient
             var consumerId = payload?["consumerId"]?.ToString() ?? "unknown";
             var uvIndex = payload?["uvIndex"]?.ToString() ?? BrowserId;
 
- 
+
 
             try
             {
@@ -135,12 +136,14 @@ namespace CefClient
                     Javascript = CefState.Enabled,
                     ImageLoading = CefState.Enabled,
                     WebGl = CefState.Disabled,
+
                 };
 
                 var requestContextSettings = new RequestContextSettings
                 {
                     PersistSessionCookies = false,
                     CachePath = null,
+                    AcceptLanguageList = "zh-CN,zh;q=0.9",
                 };
 
                 using var requestContext = new RequestContext(requestContextSettings);
@@ -176,7 +179,16 @@ namespace CefClient
                     await devToolsClient.Storage.ClearDataForOriginAsync("*", "cache_storage,cookies,local_storage");
                 }
 
-                await devToolsClient.Emulation.SetUserAgentOverrideAsync(userAgent: ua, platform: platform);
+                await devToolsClient.Emulation.SetUserAgentOverrideAsync(userAgent: ua, platform: (os == 2 ?  "Linux aarch64" : "iOS"), userAgentMetadata: new CefSharp.DevTools.Emulation.UserAgentMetadata()
+                {
+                    Mobile = (os == 1 || os == 2),
+                    Platform=platform,
+                    PlatformVersion ="",// device?["osv"]?.ToString() ?? "",
+                    FullVersion="",
+                    Model =  device?["model"]?.ToString() ?? "",
+                    Brands =  new List<UserAgentBrandVersion>(),
+                    FullVersionList = new List<UserAgentBrandVersion>(),
+                });
 
                 var refererHeaders = BuildRefererHeaders(referer);
 
@@ -185,9 +197,9 @@ namespace CefClient
                     height: devProfile.CssHeight,
                     deviceScaleFactor: devProfile.DeviceScaleFactor,
                     mobile: true,
-                    scale: 1.0,
-                    screenWidth: devProfile.CssWidth,
-                    screenHeight: devProfile.CssHeight
+                    scale: 1.0
+                    //screenWidth: devProfile.CssWidth,
+                    //screenHeight: devProfile.CssHeight
                     );
                 await devToolsClient.Emulation.SetTouchEmulationEnabledAsync(true, Random.Shared.Next(4, 6));
                 await devToolsClient.Emulation.SetScrollbarsHiddenAsync(true);

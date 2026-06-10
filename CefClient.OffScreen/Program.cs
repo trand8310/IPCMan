@@ -67,7 +67,8 @@ namespace CefClient
                 PersistUserPreferences= false,
                 WindowlessRenderingEnabled = true,
                 IgnoreCertificateErrors=true,
-                UserAgent= "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36",
+                AcceptLanguageList= "zh-CN,zh;q=0.9",
+                UserAgent = "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36",
             };
             settings.CefCommandLineArgs.Add("enable-media-stream");
             settings.CefCommandLineArgs.Add("use-fake-ui-for-media-stream");
